@@ -1,6 +1,6 @@
 # Global Tunnel Client
 
-Standalone client that exposes a local port through a public URL via a tunnel server. No Node.js required.
+Standalone client that exposes a local port through a public URL via a tunnel server.
 
 ## Prerequisites
 
