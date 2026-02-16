@@ -77,20 +77,25 @@ func run(port int, serverURL, subdomain string, tcpPort int) {
 		log.Printf("TCP tunnel: local port %d", tcpPort)
 	}
 
+	lastSubdomain := subdomain
 	for {
-		if err := connect(wsURL, serverURL, port, subdomain, tcpPort); err != nil {
+		assigned, err := connect(wsURL, serverURL, port, lastSubdomain, tcpPort)
+		if err != nil {
 			log.Printf("Error: %v", err)
+		}
+		if assigned != "" {
+			lastSubdomain = assigned
 		}
 		log.Printf("Disconnected. Reconnecting in 2s...")
 		time.Sleep(2 * time.Second)
 	}
 }
 
-func connect(wsURL, serverURL string, localPort int, subdomain string, tcpPort int) error {
+func connect(wsURL, serverURL string, localPort int, subdomain string, tcpPort int) (assignedSubdomain string, err error) {
 	dialer := websocket.Dialer{HandshakeTimeout: 10 * time.Second}
 	conn, _, err := dialer.Dial(wsURL, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer conn.Close()
 
@@ -102,8 +107,8 @@ func connect(wsURL, serverURL string, localPort int, subdomain string, tcpPort i
 	if tcpPort >= 1 && tcpPort <= 65535 {
 		reg["tcpPort"] = tcpPort
 	}
-	if err := conn.WriteJSON(reg); err != nil {
-		return err
+		if err := conn.WriteJSON(reg); err != nil {
+		return "", err
 	}
 
 	var tcpConns sync.Map // id -> *tcpConnState
@@ -118,7 +123,7 @@ func connect(wsURL, serverURL string, localPort int, subdomain string, tcpPort i
 	for {
 		_, data, err := conn.ReadMessage()
 		if err != nil {
-			return err
+			return assignedSubdomain, err
 		}
 
 		var msg struct {
@@ -142,10 +147,16 @@ func connect(wsURL, serverURL string, localPort int, subdomain string, tcpPort i
 
 		switch msg.Type {
 		case "registered":
-			fmt.Println("\n  Tunnel is live.\n")
 			if msg.Subdomain != "" {
-				fmt.Printf("  Subdomain:   %s\n", msg.Subdomain)
+				assignedSubdomain = msg.Subdomain
 			}
+			host := serverHost(serverURL)
+			tunnelURL := host
+			if msg.Subdomain != "" {
+				tunnelURL = msg.Subdomain + "." + host
+			}
+			fmt.Println("\n  Tunnel is live.\n")
+			fmt.Printf("  Server:      %s\n", tunnelURL)
 			if msg.RequestedSubdomain != "" && !msg.UsedRequestedSubdomain {
 				fmt.Printf("  Note: requested subdomain %q was taken or invalid; assigned %q instead.\n", msg.RequestedSubdomain, msg.Subdomain)
 			}
@@ -155,7 +166,6 @@ func connect(wsURL, serverURL string, localPort int, subdomain string, tcpPort i
 				fmt.Printf("    Forwarding:  127.0.0.1:%d -> %s\n", localPort, msg.URL)
 			}
 			if msg.TcpTunnelPort > 0 {
-				host := serverHost(serverURL)
 				fmt.Println("  TCP tunnel (raw TCP):")
 				fmt.Printf("    Connect to:  %s:%d\n", host, msg.TcpTunnelPort)
 				fmt.Printf("    Usage:       send subdomain line then raw bytes (e.g. echo %q | nc %s %d)\n", msg.Subdomain, host, msg.TcpTunnelPort)
