@@ -28,17 +28,17 @@ Standalone client that exposes a local port through a public URL via a tunnel se
    Or without Make:
 
    ```bash
-   go build -o global-tunnel ./cmd/global-tunnel/
+   go build -o gtc ./cmd/global-tunnel/
    ```
 
 3. *(Optional)* Put the binary on your `PATH`:
 
    ```bash
    # macOS / Linux
-   sudo mv global-tunnel /usr/local/bin/
+   sudo mv gtc /usr/local/bin/
    ```
 
-   Or add the project directory to your `PATH` so you can run `./global-tunnel` from the project root.
+   Or add the project directory to your `PATH` so you can run `./gtc` from the project root.
 
 ### Cross-compile for other platforms
 
@@ -50,18 +50,18 @@ make build-all
 
 This produces:
 
-- `global-tunnel` — current platform
-- `global-tunnel-linux-amd64`
-- `global-tunnel-darwin-amd64`
-- `global-tunnel-darwin-arm64`
-- `global-tunnel-windows-amd64.exe`
+- `gtc` — current platform
+- `gtc-linux-amd64`
+- `gtc-darwin-amd64`
+- `gtc-darwin-arm64`
+- `gtc-windows-amd64.exe`
 
 ## Usage
 
 Expose a local port (default `3000`):
 
 ```bash
-global-tunnel --port 3000
+gtc --port 3000
 ```
 
 Options:
@@ -77,16 +77,16 @@ Examples:
 
 ```bash
 # Forward port 5173 (e.g. Vite dev server)
-global-tunnel --port 5173
+gtc --port 5173
 
 # Use a custom tunnel server
-global-tunnel --port 3000 --server wss://tunnel.example.com
+gtc --port 3000 --server wss://tunnel.example.com
 
 # Request a fixed subdomain
-global-tunnel --port 3000 --subdomain myapp
+gtc --port 3000 --subdomain myapp
 
 # HTTP + TCP tunnel (e.g. Postgres on 5432)
-global-tunnel --port 3000 --subdomain db --tcp-port 5432
+gtc --port 3000 --subdomain db --tcp-port 5432
 ```
 
 When connected, the client prints the public URL (and, if TCP is enabled, the server’s TCP port and how to connect). Press Ctrl+C to stop.
@@ -100,3 +100,7 @@ If the server has TCP tunneling enabled and you set `--tcp-port` (e.g. `5432`), 
 3. Then send or receive raw TCP bytes (e.g. Postgres protocol).
 
 Example: `echo "db" | nc server 4000` then type or pipe data; the stream is forwarded to the client’s `localhost:5432`.
+
+## ESP32 client
+
+An [ESP32 firmware](esp32/) is included that connects the device to the same tunnel server over Wi-Fi and exposes it via a public URL. See [esp32/README.md](esp32/README.md) for configuration, build, and upload instructions.

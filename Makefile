@@ -1,6 +1,7 @@
 # Build standalone binary (no Node.js required)
 # Usage: make build   or   make build-all
-BINARY_NAME = global-tunnel
+# Produces gtc (and gtc-<platform> for build-all)
+BINARY_NAME = gtc
 
 build:
 	go build -o $(BINARY_NAME) ./cmd/global-tunnel/

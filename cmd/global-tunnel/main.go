@@ -4,10 +4,10 @@
 //
 // Usage:
 //
-//	global-tunnel --port 3000
-//	global-tunnel --port 5173 --server wss://tunnel.rahmatzadeh.com
-//	global-tunnel --port 3000 --subdomain myapp
-//	global-tunnel --port 3000 --subdomain db --tcp-port 5432
+//	gtc --port 3000
+//	gtc --port 5173 --server wss://tunnel.rahmatzadeh.com
+//	gtc --port 3000 --subdomain myapp
+//	gtc --port 3000 --subdomain db --tcp-port 5432
 package main
 
 import (
