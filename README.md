@@ -66,9 +66,10 @@ Options:
 
 | Flag / Env           | Default                      | Description              |
 |----------------------|------------------------------|--------------------------|
-| `--port` / `TUNNEL_PORT` | `3000`                   | Local port to forward    |
+| `--port` / `TUNNEL_PORT` | `3000`                   | Local port to forward (HTTP) |
 | `--server` / `TUNNEL_SERVER` | `wss://tunnel.rahmatzadeh.com` | Tunnel server URL |
 | `--subdomain` / `TUNNEL_SUBDOMAIN` | *(none)*           | Optional fixed subdomain |
+| `--tcp-port` / `TUNNEL_TCP_PORT` | `0` (off)            | Local port to forward as raw TCP (e.g. 5432 for Postgres); requires server TCP tunnel enabled |
 
 Examples:
 
@@ -81,6 +82,19 @@ global-tunnel --port 3000 --server wss://tunnel.example.com
 
 # Request a fixed subdomain
 global-tunnel --port 3000 --subdomain myapp
+
+# HTTP + TCP tunnel (e.g. Postgres on 5432)
+global-tunnel --port 3000 --subdomain db --tcp-port 5432
 ```
 
-When connected, the client prints the public URL. Press Ctrl+C to stop.
+When connected, the client prints the public URL (and, if TCP is enabled, the server’s TCP port and how to connect). Press Ctrl+C to stop.
+
+### TCP tunnel
+
+If the server has TCP tunneling enabled and you set `--tcp-port` (e.g. `5432`), the client registers that port. The server responds with `tcpTunnelPort` (e.g. `4000`). To connect from a public client:
+
+1. Connect to the server’s TCP port (e.g. `server:4000`).
+2. Send one line: `subdomain\n` (e.g. `db\n`).
+3. Then send or receive raw TCP bytes (e.g. Postgres protocol).
+
+Example: `echo "db" | nc server 4000` then type or pipe data; the stream is forwarded to the client’s `localhost:5432`.
