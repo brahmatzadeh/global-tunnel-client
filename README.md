@@ -68,7 +68,7 @@ Options:
 
 | Flag / Env           | Default                      | Description              |
 |----------------------|------------------------------|--------------------------|
-| `--port` / `TUNNEL_PORT` | `3000`                   | Local port to forward (HTTP) |
+| `--port` / `TUNNEL_PORT` | `3000`                   | Local port to forward (HTTP); use `0` for TCP-only |
 | `--server` / `TUNNEL_SERVER` | `wss://tunnel.rahmatzadeh.com` | Tunnel server URL |
 | `--subdomain` / `TUNNEL_SUBDOMAIN` | *(none)*           | Optional fixed subdomain |
 | `--tcp-port` / `TUNNEL_TCP_PORT` | `0` (off)            | Local port to forward as raw TCP (e.g. 5432 for Postgres); requires server TCP tunnel enabled |
@@ -87,6 +87,9 @@ gtc --port 3000 --subdomain myapp
 
 # HTTP + TCP tunnel (e.g. Postgres on 5432)
 gtc --port 3000 --subdomain db --tcp-port 5432
+
+# TCP-only (e.g. SSH on port 22; no HTTP tunnel)
+gtc --port 0 --tcp-port 22
 ```
 
 When connected, the client prints the public URL (and, if TCP is enabled, the server’s TCP port and how to connect). Press Ctrl+C to stop.

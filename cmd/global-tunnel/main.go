@@ -8,6 +8,7 @@
 //	gtc --port 5173 --server wss://tunnel.rahmatzadeh.com
 //	gtc --port 3000 --subdomain myapp
 //	gtc --port 3000 --subdomain db --tcp-port 5432
+//	gtc --port 0 --tcp-port 22   (TCP-only, e.g. SSH)
 package main
 
 import (
@@ -36,7 +37,7 @@ func main() {
 		}
 	}
 
-	port := flag.Int("port", 3000, "Local port to forward (HTTP)")
+	port := flag.Int("port", 3000, "Local port to forward for HTTP tunnel (0 = TCP-only, no HTTP)")
 	server := flag.String("server", "wss://tunnel.rahmatzadeh.com", "Tunnel server URL")
 	subdomain := flag.String("subdomain", "", "Optional fixed subdomain")
 	tcpPort := flag.Int("tcp-port", 0, "Local port to forward for TCP tunnel (1-65535); 0 = off")
@@ -69,7 +70,9 @@ func run(port int, serverURL, subdomain string, tcpPort int) {
 	wsURL += "/_tunnel"
 
 	log.Printf("Connecting to tunnel server at %s", serverURL)
-	log.Printf("Local port: %d", port)
+	if port > 0 {
+		log.Printf("HTTP tunnel: local port %d", port)
+	}
 	if tcpPort > 0 {
 		log.Printf("TCP tunnel: local port %d", tcpPort)
 	}
@@ -140,17 +143,22 @@ func connect(wsURL, serverURL string, localPort int, subdomain string, tcpPort i
 		switch msg.Type {
 		case "registered":
 			fmt.Println("\n  Tunnel is live.\n")
-			fmt.Println("  Public URL:  " + msg.URL)
 			if msg.Subdomain != "" {
 				fmt.Printf("  Subdomain:   %s\n", msg.Subdomain)
 			}
 			if msg.RequestedSubdomain != "" && !msg.UsedRequestedSubdomain {
 				fmt.Printf("  Note: requested subdomain %q was taken or invalid; assigned %q instead.\n", msg.RequestedSubdomain, msg.Subdomain)
 			}
-			fmt.Printf("  Forwarding: 127.0.0.1:%d -> %s\n", localPort, msg.URL)
+			if localPort > 0 {
+				fmt.Println("  HTTP tunnel (HTTPS):")
+				fmt.Println("    Public URL:  " + msg.URL)
+				fmt.Printf("    Forwarding:  127.0.0.1:%d -> %s\n", localPort, msg.URL)
+			}
 			if msg.TcpTunnelPort > 0 {
 				host := serverHost(serverURL)
-				fmt.Printf("  TCP tunnel:  connect to %s:%d, send subdomain line then raw bytes (e.g. echo %q | nc %s %d)\n", host, msg.TcpTunnelPort, msg.Subdomain, host, msg.TcpTunnelPort)
+				fmt.Println("  TCP tunnel (raw TCP):")
+				fmt.Printf("    Connect to:  %s:%d\n", host, msg.TcpTunnelPort)
+				fmt.Printf("    Usage:       send subdomain line then raw bytes (e.g. echo %q | nc %s %d)\n", msg.Subdomain, host, msg.TcpTunnelPort)
 			}
 			fmt.Println("\n  Press Ctrl+C to stop.\n")
 		case "request":
@@ -244,6 +252,10 @@ func tcpCloseAndCleanup(writeWS func(interface{}), tcpConns *sync.Map, id string
 }
 
 func handleRequest(conn *websocket.Conn, wsWriteMu *sync.Mutex, id, method, path string, headers map[string]string, bodyBase64 string, localPort int) {
+	if localPort <= 0 {
+		sendResponse(conn, wsWriteMu, id, 503, nil, []byte("HTTP tunnel disabled (port 0)\n"))
+		return
+	}
 	var body []byte
 	if bodyBase64 != "" {
 		body, _ = base64.StdEncoding.DecodeString(bodyBase64)
