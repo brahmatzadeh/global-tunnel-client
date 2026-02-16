@@ -100,7 +100,3 @@ If the server has TCP tunneling enabled and you set `--tcp-port` (e.g. `5432`), 
 3. Then send or receive raw TCP bytes (e.g. Postgres protocol).
 
 Example: `echo "db" | nc server 4000` then type or pipe data; the stream is forwarded to the client’s `localhost:5432`.
-
-## ESP32 client
-
-An [ESP32 firmware](esp32/) is included that connects the device to the same tunnel server over Wi-Fi and exposes it via a public URL. See [esp32/README.md](esp32/README.md) for configuration, build, and upload instructions.
