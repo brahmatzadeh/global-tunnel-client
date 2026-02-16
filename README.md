@@ -2,6 +2,8 @@
 
 Standalone client that exposes a local port through a public URL via a tunnel server.
 
+**Server:** [global-tunnel-server](https://github.com/brahmatzadeh/global-tunnel-server)
+
 ## Prerequisites
 
 - **Go 1.21 or later** — [Install Go](https://go.dev/doc/install)
